@@ -69,8 +69,8 @@ uv run alembic -c judo_techniques_bot/alembic.ini revision --autogenerate -m "me
 uv run alembic -c judo_techniques_bot/alembic.ini upgrade head
 ```
 
-Run these from the repository root: `alembic.ini` lives inside the package, and the
-config reads `.bumpversion.toml` relative to the working directory.
+Run these from the repository root: `alembic.ini` lives inside the package, and
+`migrations/env.py` imports `judo_techniques_bot`, which is only importable from the root.
 
 Any unrun migrations will be run automatically when the bot is started.
 
