@@ -35,6 +35,11 @@ class MentionedTechnique:
 
 class Bot:
     MAX_RETRIES = 3
+    EXCEPTION_ERRORS = (
+        "DELETED_COMMENT",
+        "COMMENT_UNREPLIABLE",
+        "SOMETHING_IS_BROKEN",
+    )
 
     def __init__(
         self, data: dict[str, CachedTechniques], time_between_retry: int = 10 * 60
@@ -234,17 +239,8 @@ class Bot:
             comment.reply(text)
         except RedditAPIException as e:
             logger.exception(e)  # noqa: TRY401
-            EXCEPTION_ERRORS = [
-                "DELETED_COMMENT",
-                "COMMENT_UNREPLIABLE",
-                "SOMETHING_IS_BROKEN",
-            ]
-            for subexception in e.items:
-                if subexception.error_type in EXCEPTION_ERRORS:
-                    logger.info(
-                        f"Comment that was being replied to was found to be {subexception.error_type}, no reply made."
-                    )
-                    break
+            if self._is_unrepliable(e):
+                return
 
             for _ in range(self.MAX_RETRIES):
                 try:
@@ -257,14 +253,24 @@ class Bot:
                     comment.reply(text)
                     break
                 except RedditAPIException as inner_e:
-                    for inner_subexception in inner_e.items:
-                        if inner_subexception.error_type in EXCEPTION_ERRORS:
-                            logger.info(
-                                f"Comment that was being replied to was found to be {inner_subexception.error_type}, no reply made."
-                            )
-                            break
+                    if self._is_unrepliable(inner_e):
+                        return
 
         logger.info("Replied!\n_____________________")
+
+    @classmethod
+    def _is_unrepliable(cls, exception: RedditAPIException) -> bool:
+        """
+        True if the exception says the comment can no longer be replied to,
+        in which case retrying is pointless
+        """
+        for subexception in exception.items:
+            if subexception.error_type in cls.EXCEPTION_ERRORS:
+                logger.info(
+                    f"Comment that was being replied to was found to be {subexception.error_type}, no reply made."
+                )
+                return True
+        return False
 
     @staticmethod
     def _build_technique_pattern(japanese_name_lower: str) -> re.Pattern:
