@@ -268,5 +268,33 @@ with (
 
             self.assertEqual(comment.reply.call_count, 2)
 
+        def test_no_retry_for_unrepliable_comments(self):
+            for error_type in (
+                "DELETED_COMMENT",
+                "COMMENT_UNREPLIABLE",
+                "SOMETHING_IS_BROKEN",
+            ):
+                with self.subTest(error_type=error_type):
+                    comment = mock.MagicMock()
+                    comment.reply.side_effect = RedditAPIException(
+                        [error_type, "test", None]
+                    )
+
+                    self.bot._reply_to_comment(comment, [])
+
+                    self.assertEqual(comment.reply.call_count, 1)
+
+        def test_stop_retrying_when_comment_becomes_unrepliable(self):
+            comment = mock.MagicMock()
+            comment.reply.side_effect = [
+                RedditAPIException(["test", "test", "test"]),
+                RedditAPIException(["DELETED_COMMENT", "test", None]),
+                None,
+            ]
+
+            self.bot._reply_to_comment(comment, [])
+
+            self.assertEqual(comment.reply.call_count, 2)
+
     if __name__ == "__main__":
         unittest.main()
