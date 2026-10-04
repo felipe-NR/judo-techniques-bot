@@ -60,14 +60,17 @@ uv run -m unittest
 #### Generate Migration
 
 ```bash
-uv run alembic revision --autogenerate -m "message"
+uv run alembic -c judo_techniques_bot/alembic.ini revision --autogenerate -m "message"
 ```
 
 #### Run Migration
 
 ```bash
-uv run alembic upgrade head
+uv run alembic -c judo_techniques_bot/alembic.ini upgrade head
 ```
+
+Run these from the repository root: `alembic.ini` lives inside the package, and the
+config reads `.bumpversion.toml` relative to the working directory.
 
 Any unrun migrations will be run automatically when the bot is started.
 
