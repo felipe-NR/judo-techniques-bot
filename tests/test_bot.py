@@ -57,6 +57,19 @@ with (
             self.assertIsNotNone(pattern.search("judo"))
             self.assertIsNone(pattern.search("karate"))
 
+        def test_build_technique_pattern_matches_whole_words_only(self):
+            pattern = Bot._build_technique_pattern("o uchi gari")
+            self.assertIsNotNone(pattern.search("a nice o uchi gari."))
+            self.assertIsNotNone(pattern.search("(o-uchi-gari)"))
+            self.assertIsNotNone(pattern.search("two o uchi garis"))
+            self.assertIsNone(pattern.search("ko uchi gari"))
+            self.assertIsNone(pattern.search("kouchigari"))
+
+            pattern = Bot._build_technique_pattern("kake")
+            self.assertIsNotNone(pattern.search("the kake was late"))
+            self.assertIsNone(pattern.search("ashikake"))
+            self.assertIsNone(pattern.search("kakeru"))
+
         def test_get_mentioned_techniques_from_comment(self):
             comment = FakeComment(
                 "I Uchi Mata that guy last week, but that was only after he seoi Nage'd me"

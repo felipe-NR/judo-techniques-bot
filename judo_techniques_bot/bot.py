@@ -276,9 +276,10 @@ class Bot:
     def _build_technique_pattern(japanese_name_lower: str) -> re.Pattern:
         """
         Build a regex that matches all space/hyphen/concatenated variants of a technique name.
-        e.g. "o uchi gari" -> r"o[ \\-]?uchi[ \\-]?gari"
-        Matches: "o uchi gari", "o-uchi-gari", "ouchigari", "o-uchi gari", etc.
+        e.g. "o uchi gari" -> r"\bo[ \\-]?uchi[ \\-]?garis?\b"
+        Matches: "o uchi gari", "o-uchi-gari", "ouchigari", "o-uchi gari", "o uchi garis", etc.
+        Word boundaries stop matches inside longer words, e.g. "o uchi gari" in "ko uchi gari"
         """
         words = japanese_name_lower.split(" ")
         pattern = "[ \\-]?".join(re.escape(word) for word in words)
-        return re.compile(pattern)
+        return re.compile(rf"\b{pattern}s?\b")
